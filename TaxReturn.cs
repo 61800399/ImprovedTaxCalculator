@@ -14,7 +14,7 @@ public static class TaxReturn
         return GetRate(income, false);
     }
     /// <summary>
-    /// Joint tax rate returns
+    /// Percentage of tax revomed from gross income
     /// </summary>
     /// <param name="income">Money made throughout the year</param>
     /// <param name="joint">Is this filed jointly</param>
@@ -106,14 +106,64 @@ public static class TaxReturn
     /// </summary>
     /// <param name="income">Amount made before paying taxes</param>
     /// <param name="rate">Tax Rate</param>
-    /// <returns></returns>
+    /// <returns>Net money made</returns>
     public static double NetIncome(double income, Rates rate)
     {
         return NetIncome(income, (int)rate);
     }
+    /// <summary>
+    /// Calculates income after taxes applied
+    /// </summary>
+    /// <param name="income">Amount made before paying taxes</param>
+    /// <param name="rate">Tax Rate</param>
+    /// <returns>Net money made</returns>
     public static double NetIncome(double income, double rate)
     {
-        return (income * (1 - (rate/100)));
+        double AfterTax = income * (1 - (rate / 100));
+        double Taxed = TaxedAmount(income, rate);
+        // Exepmtions
+        double AmountExempt = Exempt.ChildCredit(income, 0, null, null, Taxed);
+        double dependant = Exempt.Dependant(income, 1, false);
+        // Total exempt
+        double TotalExempt = AmountExempt + dependant;
+        if (AfterTax + TotalExempt > income)
+        {
+            AfterTax = income;
+        }
+        else
+        {
+            AfterTax += TotalExempt;
+        }
+        return AfterTax;
+    }
+    /// <summary>
+    /// Amount of your income lost to taxation out of gross income
+    /// </summary>
+    /// <param name="income">Gross income</param>
+    /// <returns>Income allocated to tax</returns>
+    public static double TaxedAmount(double income)
+    {
+        return TaxedAmount(income, GetRate(income));
+    }
+    /// <summary>
+    /// Amount of your income lost to taxation out of gross income
+    /// </summary>
+    /// <param name="income">Gross income</param>
+    /// <param name="rate">Percentage taxed</param>
+    /// <returns>Income allocated to tax</returns>
+    public static double TaxedAmount(double income, Rates rate)
+    {
+        return TaxedAmount(income, (double)rate);
+    }
+    /// <summary>
+    /// Amount of your income lost to taxation out of gross income
+    /// </summary>
+    /// <param name="income">Gross income</param>
+    /// <param name="rate">Percentage taxed</param>
+    /// <returns>Income allocated to tax</returns>
+    public static double TaxedAmount(double income, double rate)
+    {
+        return income * (rate/100);
     }
     /// <summary>
     /// Common rates used in taxes
